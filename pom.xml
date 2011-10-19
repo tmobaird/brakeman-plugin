@@ -84,21 +84,5 @@
       </snapshots>
     </repository>
   </repositories>
-
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <rulesets>
-            <ruleset>${project.artifactId}/.ruleset</ruleset>
-          </rulesets>
-          <targetJdk>1.5</targetJdk>
-        </configuration>
-      </plugin>
-    </plugins>
-  </reporting>
 </project>
 
