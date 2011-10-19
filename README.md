@@ -4,11 +4,17 @@ A Hudson/[Jenkins](http://jenkins-ci.org) plugin to run [Brakeman](https://githu
 
 This plugin requires the [Static Analysis Utilities Plugin](https://wiki.jenkins-ci.org/display/JENKINS/Static+Code+Analysis+Plug-ins) (which is also called "analysis-core") version >= 1.16. The plugin is available in Jenkins under `Manage Jenkins -> Manage Plugins -> Available -> Static Analysis Utilities`.
 
-You will also need to have Ruby and RubyGems installed on the Jenkins/Hudson server.
+You will also need to have Ruby and RubyGems installed on the Jenkins/Hudson server in order to run Brakeman.
 
 ## Installing the Plugin
 
-Download `brakeman.hpi` from [here](https://github.com/downloads/presidentbeef/brakeman-jenkins-plugin/brakeman.hpi).
+### Through Jenkins
+
+Navigate to `Manage Jenkins -> Manage Plugins -> Available` and look for "Brakeman". Click the checkbox and then the "Install" button at the bottom of the page.
+
+### Manually
+
+Download `brakeman.hpi` from [here](https://github.com/jenkinsci/brakeman-plugin/raw/master/brakeman.hpi).
 
 Inside Jenkins, go to `Manage Jenkins -> Manage Plugins -> Advanced -> Upload Plugin`.
 
@@ -16,12 +22,14 @@ Upload `brakeman.hpi`.
 
 ## Usage
 
-Add/append a shell command to your job configuration like:
+### Add Shell Command
+
+Add/append a shell command to your job configuration like (this is just an example):
 
     gem install brakeman --no-rdoc --no-ri &&
     brakeman -o brakeman-output.tabs
 
-Or, if [rvm](https://rvm.beginrescueend.com/) is available:
+Or, if [rvm](https://rvm.beginrescueend.com/) is available, you can use something like:
 
     bash -l -c 'rvm use 1.8.7 &&
     rvm gemset create brakeman &&
@@ -29,7 +37,9 @@ Or, if [rvm](https://rvm.beginrescueend.com/) is available:
     gem install brakeman --no-rdoc --no-ri &&
     brakeman -o brakeman-output.tabs'
 
-There is also a smaller package called `brakeman-min` which installs a minimal version of Brakeman. If Haml or RailsXSS are used, then the `haml` or `erubis` gems (respectively) need to be installed separately.
+The version of Ruby may vary according to your setup.
+
+### Publish Warnings
 
 Click 'Publish Brakeman warnings' to enable the Brakeman.
 
@@ -45,7 +55,9 @@ After cloning the source, run this in the main directory:
 
 This starts up a copy of Jenkins with the Brakeman plugin installed. This is not necessary if you just want to install the plugin.
 
-## Build
+## Building a New Plugin Package
+
+This is to generate a new `brakeman.hpi`.
 
 Requires Maven2. You will likely need to modify your environment as documented [here](https://wiki.jenkins-ci.org/display/JENKINS/Plugin+tutorial#Plugintutorial-SettingUpEnvironment).
 
