@@ -1,33 +1,20 @@
 package hudson.plugins.brakeman;
 
 import hudson.Extension;
-import hudson.Launcher;
-import hudson.Proc;
 import hudson.FilePath;
-import hudson.Launcher.LocalLauncher;
-import hudson.model.AbstractBuild;
+import hudson.Launcher;
+import hudson.model.Run;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Result;
-import hudson.model.TaskListener;
-import hudson.plugins.analysis.core.BuildResult;
-import hudson.plugins.analysis.core.HealthAwarePublisher;
-import hudson.plugins.analysis.core.ParserResult;
+import hudson.plugins.analysis.core.*;
 import hudson.plugins.analysis.util.PluginLogger;
 import hudson.plugins.analysis.util.model.Priority;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Publisher;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileReader;
-import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -91,25 +78,25 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 
 	/** {@inheritDoc} */
 	@Override
-		public BuildResult perform(final AbstractBuild<?, ?> build, final PluginLogger logger) throws InterruptedException, IOException {
+		public BuildResult perform(final Run<?, ?> build, final FilePath workspace, final PluginLogger logger) throws InterruptedException, IOException {
 
 
-			FilePath brakemanOutput = new FilePath(build.getWorkspace(), this.outputFile);
+			FilePath brakemanOutput = new FilePath(workspace, this.outputFile);
 
 			String output = brakemanOutput.readToString();
 
-			ParserResult project = new ParserResult(build.getWorkspace());
+			ParserResult project = new ParserResult(workspace);
 			this.scan(output, project);
-
-			BrakemanResult result = new BrakemanResult(build, getDefaultEncoding(), project);
-			build.getActions().add(new BrakemanResultAction(build, this, result));
+			BuildHistory history = new BuildHistory(build, BrakemanResultAction.class, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference());
+			BrakemanResult result = new BrakemanResult(build, history, project, getDefaultEncoding());
+			build.addAction(new BrakemanResultAction(build, this, result));
 
 			return result;
 		}
 
 	/** {@inheritDoc} */
 	@Override
-		public BuildStepDescriptor<Publisher> getDescriptor() {
+		public PluginDescriptor getDescriptor() {
 			return BRAKEMAN_DESCRIPTOR;
 		}
 

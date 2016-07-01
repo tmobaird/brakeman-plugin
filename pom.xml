@@ -9,7 +9,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.409</version>
+    <version>1.609.2</version>
   </parent>
 
   <artifactId>brakeman</artifactId>
@@ -45,9 +45,14 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>matrix-project</artifactId>
+      <version>1.6</version>
+    </dependency>
+    <dependency>
       <groupId>org.jvnet.hudson.plugins</groupId>
       <artifactId>analysis-core</artifactId>
-      <version>1.38</version>
+      <version>1.78</version>
     </dependency>
   </dependencies>
 
@@ -59,12 +64,12 @@
         <extensions>true</extensions>
       </plugin>
       <plugin>
-        <groupId>org.jvnet.hudson.tools</groupId>
+        <groupId>org.jenkins-ci.tools</groupId>
         <artifactId>maven-hpi-plugin</artifactId>
-        <version>2.1.1</version>
+        <version>1.117</version>
         <configuration>
-          <showDeprecation>true</showDeprecation>
-          <showWarnings>true</showWarnings>
+          <!--<showDeprecation>true</showDepr ecation>-->
+          <!--<showWarnings>true</showWarnings>-->
         </configuration>
       </plugin>
     </plugins>
@@ -84,12 +89,11 @@
     </repository>
   </repositories>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>  
-
 

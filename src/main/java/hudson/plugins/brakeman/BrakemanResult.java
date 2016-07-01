@@ -1,6 +1,7 @@
 package hudson.plugins.brakeman;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.plugins.analysis.core.BuildHistory;
 import hudson.plugins.analysis.core.BuildResult;
 import hudson.plugins.analysis.core.ParserResult;
@@ -45,9 +46,9 @@ public class BrakemanResult extends BuildResult {
      * @param history
      *            the plug-in history
      */
-    protected BrakemanResult(final AbstractBuild<?, ?> build, final String defaultEncoding, final ParserResult result,
-            final BuildHistory history) {
-        super(build, defaultEncoding, result, history);
+    protected BrakemanResult(final Run<?, ?> build, final BuildHistory history, final ParserResult result, final String defaultEncoding
+                             ) {
+        super(build, history, result, defaultEncoding);
     }
 
     /** {@inheritDoc} */
