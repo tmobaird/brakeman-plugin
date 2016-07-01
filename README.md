@@ -45,6 +45,15 @@ Click 'Publish Brakeman warnings' to enable the Brakeman.
 
 Some adjustment may need to be done regarding paths. Brakeman needs to be run at the root of the application or supplied with the path. The output file specified on the commandline needs to be synched with the output file specified as a plugin option.
 
+### Pipeline usage
+
+Assuming build environment is configured as above:
+
+    node {
+      sh 'brakeman -o brakeman-output.tabs'
+      publishBrakeman 'path/to/brakeman-output.tabs'
+    }
+
 ## Testing without Existing Jenkins Server
 
 Requires Maven2. You will likely need to modify your environment as documented [here](https://wiki.jenkins-ci.org/display/JENKINS/Plugin+tutorial#Plugintutorial-SettingUpEnvironment).

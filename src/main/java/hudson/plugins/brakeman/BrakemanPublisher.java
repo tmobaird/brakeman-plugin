@@ -92,8 +92,10 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 	/** {@inheritDoc} */
 	@Override
 		public BuildResult perform(final Run<?, ?> build, final FilePath workspace, final PluginLogger logger) throws InterruptedException, IOException {
+			return publishReport(build, workspace);
+		}
 
-
+		public BuildResult publishReport(final Run<?, ?> build, final FilePath workspace) throws InterruptedException, IOException {
 			FilePath brakemanOutput = new FilePath(workspace, this.outputFile);
 
 			String output = brakemanOutput.readToString();
@@ -106,7 +108,6 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 
 			return result;
 		}
-
 	/** {@inheritDoc} */
 	@Override
 		public PluginDescriptor getDescriptor() {

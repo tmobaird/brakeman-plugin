@@ -49,6 +49,11 @@
       <artifactId>analysis-core</artifactId>
       <version>1.78</version>
     </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-step-api</artifactId>
+      <version>1.15</version>
+    </dependency>
   </dependencies>
 
   <build>
