@@ -47,7 +47,7 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 				final String failedTotalAll, final String failedTotalHigh, final String failedTotalNormal, final String failedTotalLow,
 				final String failedNewAll, final String failedNewHigh, final String failedNewNormal, final String failedNewLow,
 				final boolean canRunOnFailed, final boolean shouldDetectModules, final boolean canComputeNew, final String outputFile) {
-
+			// TODO use non-deprecated constructor
 			super(healthy, unHealthy, thresholdLimit, "UTF-8", useDeltaValues,
 					unstableTotalAll, unstableTotalHigh, unstableTotalNormal, unstableTotalLow,
 					unstableNewAll, unstableNewHigh, unstableNewNormal, unstableNewLow,
@@ -87,8 +87,8 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 
 			ParserResult project = new ParserResult(workspace);
 			this.scan(output, project);
-			BuildHistory history = new BuildHistory(build, BrakemanResultAction.class, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference());
-			BrakemanResult result = new BrakemanResult(build, history, project, getDefaultEncoding());
+
+			BrakemanResult result = new BrakemanResult(build, getDefaultEncoding(), project, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference());
 			build.addAction(new BrakemanResultAction(build, this, result));
 
 			return result;
@@ -107,7 +107,7 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 		}
 
 	private void scan(String brakemanOutput, ParserResult project) {
-		Matcher m = this.pattern.matcher(brakemanOutput);
+		Matcher m = pattern.matcher(brakemanOutput);
 
 		while(m.find()) {
 			String fileName = m.group(1);
