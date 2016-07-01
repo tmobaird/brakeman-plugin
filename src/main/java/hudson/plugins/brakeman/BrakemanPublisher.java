@@ -2,7 +2,6 @@ package hudson.plugins.brakeman;
 
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -33,13 +32,28 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 	public String outputFile;
 	private static Pattern pattern = Pattern.compile("^([^\t]+?)\t(\\d+)\t([\\w\\s]+?)\t(\\w+)\t([^\t]+?)\t(High|Medium|Weak)", Pattern.MULTILINE);
 
+
+	/**
+	 * Creates a new instance of <code>BrakemanPublisher</code>
+	 *
+	 * @param outputFile
+	 *        Workspace path to Brakeman output
+     */
+	@DataBoundConstructor
+	public BrakemanPublisher(final String outputFile) {
+		super("BRAKEMAN");
+		this.setDefaultEncoding("UTF-8");
+		this.outputFile = outputFile;
+	}
+
 	/**
 	 * Creates a new instance of <code>BrakemanPublisher</code>.
 	 *
+	 * @deprecated prefer setters from the base class
 	 */
 	// CHECKSTYLE:OFF
 	@SuppressWarnings("PMD.ExcessiveParameterList")
-		@DataBoundConstructor
+		@Deprecated
 		public BrakemanPublisher(final String healthy, final String unHealthy, final String thresholdLimit,
 				final boolean useDeltaValues,
 				final String unstableTotalAll, final String unstableTotalHigh, final String unstableTotalNormal, final String unstableTotalLow,
@@ -47,7 +61,6 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 				final String failedTotalAll, final String failedTotalHigh, final String failedTotalNormal, final String failedTotalLow,
 				final String failedNewAll, final String failedNewHigh, final String failedNewNormal, final String failedNewLow,
 				final boolean canRunOnFailed, final boolean shouldDetectModules, final boolean canComputeNew, final String outputFile) {
-			// TODO use non-deprecated constructor
 			super(healthy, unHealthy, thresholdLimit, "UTF-8", useDeltaValues,
 					unstableTotalAll, unstableTotalHigh, unstableTotalNormal, unstableTotalLow,
 					unstableNewAll, unstableNewHigh, unstableNewNormal, unstableNewLow,

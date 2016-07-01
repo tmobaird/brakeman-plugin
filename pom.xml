@@ -45,11 +45,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>matrix-project</artifactId>
-      <version>1.6</version>
-    </dependency>
-    <dependency>
       <groupId>org.jvnet.hudson.plugins</groupId>
       <artifactId>analysis-core</artifactId>
       <version>1.78</version>
@@ -67,10 +62,6 @@
         <groupId>org.jenkins-ci.tools</groupId>
         <artifactId>maven-hpi-plugin</artifactId>
         <version>1.117</version>
-        <configuration>
-          <!--<showDeprecation>true</showDepr ecation>-->
-          <!--<showWarnings>true</showWarnings>-->
-        </configuration>
       </plugin>
     </plugins>
   </build>
