@@ -1,6 +1,7 @@
 package hudson.plugins.brakeman;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.plugins.analysis.core.BuildHistory;
 import hudson.plugins.analysis.core.BuildResult;
 import hudson.plugins.analysis.core.ParserResult;
@@ -20,35 +21,41 @@ public class BrakemanResult extends BuildResult {
     private static final long serialVersionUID = -137460587767210579L;
 
     /**
-     * Creates a new instance of {@link BrakemanResult}.
-     *
+     * Creates a new instance of {@link BrakemanResult}
      * @param build
      *            the current build as owner of this action
      * @param defaultEncoding
      *            the default encoding to be used when reading and parsing files
      * @param result
      *            the parsed result with all annotations
+     * @param usePreviousBuildAsReference
+     *            compare with previous build
+     * @param useStableBuildAsReference
+     *            compare with only stable builds
      */
-    public BrakemanResult(final AbstractBuild<?, ?> build, final String defaultEncoding, final ParserResult result) {
-        super(build, defaultEncoding, result);
+    public BrakemanResult(final Run<?, ?> build, final String defaultEncoding, final ParserResult result,
+                          final boolean usePreviousBuildAsReference, final boolean useStableBuildAsReference) {
+        this(build, defaultEncoding, result, usePreviousBuildAsReference, useStableBuildAsReference,
+                BrakemanResultAction.class);
+
     }
 
-    /**
-     * Creates a new instance of {@link BrakemanResult}.
-     *
-     * @param build
-     *            the current build as owner of this action
-     * @param defaultEncoding
-     *            the default encoding to be used when reading and parsing files
-     * @param result
-     *            the parsed result with all annotations
-     * @param history
-     *            the plug-in history
-     */
-    protected BrakemanResult(final AbstractBuild<?, ?> build, final String defaultEncoding, final ParserResult result,
-            final BuildHistory history) {
-        super(build, defaultEncoding, result, history);
+    protected BrakemanResult(final Run<?, ?> build, final String defaultEncoding, final ParserResult result,
+                               final boolean usePreviousBuildAsReference, final boolean useStableBuildAsReference,
+                               final Class<? extends ResultAction<BrakemanResult>> actionType) {
+        this(build, new BuildHistory(build, actionType, usePreviousBuildAsReference, useStableBuildAsReference),
+                result, defaultEncoding, true);
     }
+
+    private BrakemanResult(final Run<?, ?> build, final BuildHistory history,
+                     final ParserResult result, final String defaultEncoding, final boolean canSerialize) {
+        super(build, history, result, defaultEncoding);
+
+        if (canSerialize) {
+            serializeAnnotations(result.getAnnotations());
+        }
+    }
+
 
     /** {@inheritDoc} */
     @Override

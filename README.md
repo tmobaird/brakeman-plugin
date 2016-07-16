@@ -2,7 +2,7 @@ A Hudson/[Jenkins](http://jenkins-ci.org) plugin to run [Brakeman](https://githu
 
 ## Requirements
 
-This plugin requires the [Static Analysis Utilities Plugin](https://wiki.jenkins-ci.org/display/JENKINS/Static+Code+Analysis+Plug-ins) (which is also called "analysis-core") version >= 1.16. The plugin is available in Jenkins under `Manage Jenkins -> Manage Plugins -> Available -> Static Analysis Utilities`.
+This plugin requires the [Static Analysis Utilities Plugin](https://wiki.jenkins-ci.org/display/JENKINS/Static+Code+Analysis+Plug-ins) (which is also called "analysis-core") version >= 1.78. The plugin is available in Jenkins under `Manage Jenkins -> Manage Plugins -> Available -> Static Analysis Utilities`.
 
 You will also need to have Ruby and RubyGems installed on the Jenkins/Hudson server in order to run Brakeman.
 
@@ -44,6 +44,15 @@ The version of Ruby may vary according to your setup.
 Click 'Publish Brakeman warnings' to enable the Brakeman.
 
 Some adjustment may need to be done regarding paths. Brakeman needs to be run at the root of the application or supplied with the path. The output file specified on the commandline needs to be synched with the output file specified as a plugin option.
+
+### Pipeline usage
+
+Assuming build environment is configured as above:
+
+    node {
+      sh 'brakeman -o brakeman-output.tabs'
+      publishBrakeman 'path/to/brakeman-output.tabs'
+    }
 
 ## Testing without Existing Jenkins Server
 
