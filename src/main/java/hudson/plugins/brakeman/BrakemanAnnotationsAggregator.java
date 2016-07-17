@@ -39,7 +39,7 @@ public class BrakemanAnnotationsAggregator extends AnnotationsAggregator {
     @Override
     protected Action createAction(final HealthDescriptor healthDescriptor, final String defaultEncoding, final ParserResult aggregatedResult) {
         return new BrakemanResultAction(build, healthDescriptor,
-                new BrakemanResult(build, defaultEncoding, aggregatedResult));
+                new BrakemanResult(build, defaultEncoding, aggregatedResult, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference()));
     }
 
     @Override

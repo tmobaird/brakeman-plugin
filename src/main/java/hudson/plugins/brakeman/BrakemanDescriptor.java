@@ -47,12 +47,4 @@ public final class BrakemanDescriptor extends PluginDescriptor {
         return ACTION_ICON;
     }
 
-    /** {@inheritDoc} */
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean isApplicable(final Class<? extends AbstractProject> jobType) {
-        
-        return FreeStyleProject.class.isAssignableFrom(jobType);
-    }
-
 }
