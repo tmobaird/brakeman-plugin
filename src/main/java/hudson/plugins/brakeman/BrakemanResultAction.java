@@ -1,6 +1,7 @@
 package hudson.plugins.brakeman;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.plugins.analysis.core.AbstractResultAction;
 import hudson.plugins.analysis.core.HealthDescriptor;
 import hudson.plugins.analysis.core.PluginDescriptor;
@@ -30,20 +31,8 @@ public class BrakemanResultAction extends AbstractResultAction<BrakemanResult> {
      * @param result
      *            the result in this build
      */
-    public BrakemanResultAction(final AbstractBuild<?, ?> owner, final HealthDescriptor healthDescriptor, final BrakemanResult result) {
+    public BrakemanResultAction(final Run<?, ?> owner, final HealthDescriptor healthDescriptor, final BrakemanResult result) {
         super(owner, new BrakemanHealthDescriptor(healthDescriptor), result);
-    }
-
-    /**
-     * Creates a new instance of <code>BrakemanResultAction</code>.
-     *
-     * @param owner
-     *            the associated build of this action
-     * @param healthDescriptor
-     *            health descriptor to use
-     */
-    public BrakemanResultAction(final AbstractBuild<?, ?> owner, final HealthDescriptor healthDescriptor) {
-        super(owner, new BrakemanHealthDescriptor(healthDescriptor));
     }
 
     /** {@inheritDoc} */

@@ -3,19 +3,20 @@
     <connection>scm:git:ssh://github.com/jenkinsci/brakeman-plugin.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/brakeman-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/brakeman-plugin</url>
+    <tag>HEAD</tag>
   </scm>
   <modelVersion>4.0.0</modelVersion>
  
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.424</version>
+    <version>1.609.2</version>
   </parent>
 
   <artifactId>brakeman</artifactId>
   <packaging>hpi</packaging>
   <name>Brakeman Plugin</name>
-  <version>0.8-SNAPSHOT</version>
+  <version>0.9-SNAPSHOT</version>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/Brakeman+Plugin</url>
   <description>This plugin reads output from Brakeman, a static analysis vulnerability scanner for Ruby on Rails.</description>
 
@@ -47,7 +48,12 @@
     <dependency>
       <groupId>org.jvnet.hudson.plugins</groupId>
       <artifactId>analysis-core</artifactId>
-      <version>1.38</version>
+      <version>1.78</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-step-api</artifactId>
+      <version>1.15</version>
     </dependency>
   </dependencies>
 
@@ -59,12 +65,15 @@
         <extensions>true</extensions>
       </plugin>
       <plugin>
-        <groupId>org.jvnet.hudson.tools</groupId>
+        <groupId>org.jenkins-ci.tools</groupId>
         <artifactId>maven-hpi-plugin</artifactId>
-        <version>2.1.1</version>
+        <version>1.117</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
-          <showDeprecation>true</showDeprecation>
-          <showWarnings>true</showWarnings>
+          <additionalparam>-Xdoclint:none</additionalparam>
         </configuration>
       </plugin>
     </plugins>
