@@ -14,8 +14,12 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.kohsuke.stapler.DataBoundConstructor;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import org.kohsuke.stapler.DataBoundConstructor;
+import hudson.plugins.brakeman.scanners.*;
 /**
  * Publishes the results of the warnings analysis (freestyle project type).
  *
@@ -98,10 +102,20 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 		public BuildResult publishReport(final Run<?, ?> build, final FilePath workspace) throws InterruptedException, IOException {
 			FilePath brakemanOutput = new FilePath(workspace, this.outputFile);
 
-			String output = brakemanOutput.readToString();
+			String outputOne = brakemanOutput.readToString();
 
 			ParserResult project = new ParserResult(workspace);
-			this.scan(output, project);
+
+			AbstractBrakemanScanner scanner;
+
+			if(this.outputFile.endsWith(".json")) {
+				scanner = new BrakemanJSONScanner();
+			} else {
+				scanner = new BrakemanTabsScanner();
+
+			}
+
+			scanner.scan(outputOne, project);
 
 			BrakemanResult result = new BrakemanResult(build, getDefaultEncoding(), project, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference());
 			build.addAction(new BrakemanResultAction(build, this, result));
@@ -119,37 +133,6 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 		protected boolean canContinue(final Result result) {
 			return super.canContinue(result);
 		}
-
-	private void scan(String brakemanOutput, ParserResult project) {
-		Matcher m = pattern.matcher(brakemanOutput);
-
-		while(m.find()) {
-			String fileName = m.group(1);
-			int line = Integer.parseInt(m.group(2));
-			String type = m.group(3);
-			String category = m.group(4);
-			String message = m.group(5);
-			String prio = m.group(6);
-
-			Priority priority = Priority.HIGH;
-			if ("Medium".equalsIgnoreCase(prio)) {
-				priority = Priority.NORMAL;
-			} else if ("High".equalsIgnoreCase(prio)) {
-				priority = Priority.HIGH;
-			} else if ("Weak".equalsIgnoreCase(prio)) {
-				priority = Priority.LOW;
-			}
-
-			int start = 0;
-			int end = line + 1;
-
-			if(line > 2)
-				start = line - 1;
-
-
-			project.addAnnotation(new Warning(fileName, start, end, type, category, message, priority));
-		}
-	}
 
 
   public hudson.matrix.MatrixAggregator createAggregator(hudson.matrix.MatrixBuild build,hudson.Launcher launcher,hudson.model.BuildListener listener) {
