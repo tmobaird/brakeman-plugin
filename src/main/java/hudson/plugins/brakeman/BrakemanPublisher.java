@@ -135,6 +135,7 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 		}
 
 
+
   public hudson.matrix.MatrixAggregator createAggregator(hudson.matrix.MatrixBuild build,hudson.Launcher launcher,hudson.model.BuildListener listener) {
     return null;
   }

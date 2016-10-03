@@ -1,11 +1,33 @@
 package hudson.plugins.brakeman;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.Iterator;
+
 import hudson.model.AbstractBuild;
 import hudson.model.Run;
+import hudson.model.Result;
 import hudson.plugins.analysis.core.BuildHistory;
+import hudson.plugins.analysis.core.Thresholds;
 import hudson.plugins.analysis.core.BuildResult;
+import hudson.plugins.analysis.core.BuildResultEvaluator;
 import hudson.plugins.analysis.core.ParserResult;
 import hudson.plugins.analysis.core.ResultAction;
+import hudson.plugins.analysis.util.model.FileAnnotation;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import hudson.plugins.analysis.util.PluginLogger;
 
 import com.thoughtworks.xstream.XStream;
 
@@ -19,6 +41,12 @@ import com.thoughtworks.xstream.XStream;
 public class BrakemanResult extends BuildResult {
     /** Unique identifier of this class. */
     private static final long serialVersionUID = -137460587767210579L;
+
+    private transient boolean useDeltaValues;
+    private transient Thresholds thresholds = new Thresholds();
+    /** The build history for the results of this plug-in. */
+    private transient BuildHistory history;
+    private String reason;
 
     /**
      * Creates a new instance of {@link BrakemanResult}
@@ -88,6 +116,77 @@ public class BrakemanResult extends BuildResult {
     public String getDisplayName() {
         return Messages.Brakeman_ProjectAction_Name();
     }
+
+    @SuppressWarnings("hiding")
+    @Override
+    public void evaluateStatus(final Thresholds thresholds, final boolean useDeltaValues, final PluginLogger logger, final String url) {
+        evaluateStatus(thresholds, useDeltaValues, true, logger, url);
+    }
+
+    /**
+     * Updates the build status, i.e. sets this plug-in result status field to
+     * the corresponding {@link Result}. Additionally, the {@link Result} of the
+     * build that owns this instance of {@link BuildResult} will be also
+     * changed.
+     *
+     * @param thresholds
+     *            the failure thresholds
+     * @param useDeltaValues
+     *            the use delta values when computing the differences
+     * @param canComputeNew
+     *            determines whether new warnings should be computed (with
+     *            respect to baseline)
+     * @param logger
+     *            the logger
+     * @param url
+     *            the URL of the results
+     */
+    // CHECKSTYLE:OFF
+    @SuppressWarnings("hiding")
+    @Override
+    public void evaluateStatus(final Thresholds thresholds, final boolean useDeltaValues, final boolean canComputeNew,
+                               final PluginLogger logger, final String url) {
+        // CHECKSTYLE:ON
+        this.thresholds = thresholds;
+        this.useDeltaValues = useDeltaValues;
+
+        BuildResultEvaluator resultEvaluator = new BuildResultEvaluator(url);
+        Result buildResult;
+        StringBuilder messages = new StringBuilder();
+        Set<FileAnnotation> annotations = getNonIgnoredAnnotations();
+        if (getHistory().isEmpty() || !canComputeNew) {
+            logger.log("Ignore new warnings since this is the first valid build");
+            buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations);
+        }
+        else if (useDeltaValues) {
+            buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations,
+                    getDelta(), getHighDelta(), getNormalDelta(), getLowDelta());
+        }
+        else {
+            buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds,
+                    annotations, getNewWarnings());
+        }
+        reason = messages.toString();
+
+        setResult(buildResult);
+
+        logger.log(String.format("%s %s - %s", Messages.Brakeman_ResultAction_Status(), buildResult.color.getDescription(), getReason()));
+    }
+
+    public Set<FileAnnotation> getNonIgnoredAnnotations() {
+        Set<FileAnnotation> myAnnotations = getAnnotations();
+        Iterator<FileAnnotation> itr = myAnnotations.iterator();
+        Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
+        while(itr.hasNext()){
+            FileAnnotation a = itr.next();
+            if(a.getCategory() != "Ignored") {
+                annotations.add(a);
+            }
+        }
+
+        return annotations;
+    }
+
 
     /** {@inheritDoc} */
     @Override
