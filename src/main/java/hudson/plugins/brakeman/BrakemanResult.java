@@ -24,6 +24,8 @@ import hudson.plugins.analysis.core.BuildResultEvaluator;
 import hudson.plugins.analysis.core.ParserResult;
 import hudson.plugins.analysis.core.ResultAction;
 import hudson.plugins.analysis.util.model.FileAnnotation;
+import org.apache.commons.lang.StringUtils;
+
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -65,7 +67,6 @@ public class BrakemanResult extends BuildResult {
                           final boolean usePreviousBuildAsReference, final boolean useStableBuildAsReference) {
         this(build, defaultEncoding, result, usePreviousBuildAsReference, useStableBuildAsReference,
                 BrakemanResultAction.class);
-
     }
 
     protected BrakemanResult(final Run<?, ?> build, final String defaultEncoding, final ParserResult result,
@@ -117,6 +118,15 @@ public class BrakemanResult extends BuildResult {
         return Messages.Brakeman_ProjectAction_Name();
     }
 
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    @Override
+    public String getReason() {
+        return reason;
+    }
+
     @SuppressWarnings("hiding")
     @Override
     public void evaluateStatus(final Thresholds thresholds, final boolean useDeltaValues, final PluginLogger logger, final String url) {
@@ -166,11 +176,26 @@ public class BrakemanResult extends BuildResult {
             buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds,
                     annotations, getNewWarnings());
         }
-        reason = messages.toString();
+        String myReason = messages.toString();
+        setReason(myReason);
 
         setResult(buildResult);
 
         logger.log(String.format("%s %s - %s", Messages.Brakeman_ResultAction_Status(), buildResult.color.getDescription(), getReason()));
+    }
+
+    public Set<FileAnnotation> getIgnoredAnnotations() {
+        Set<FileAnnotation> myAnnotations = getAnnotations();
+        Iterator<FileAnnotation> itr = myAnnotations.iterator();
+        Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
+        while(itr.hasNext()) {
+            FileAnnotation a = itr.next();
+            if(a.getCategory() == "Ignored") {
+                annotations.add(a);
+            }
+        }
+
+        return annotations;
     }
 
     public Set<FileAnnotation> getNonIgnoredAnnotations() {
@@ -185,6 +210,20 @@ public class BrakemanResult extends BuildResult {
         }
 
         return annotations;
+    }
+
+    public int getNumberOfIgnoredAnnotations() {
+        Set<FileAnnotation> annotations = getIgnoredAnnotations();
+        int result = annotations.size();
+
+        return result;
+    }
+
+    public int getNumberOfNonIgnoredAnnotations() {
+        Set<FileAnnotation> annotations = getNonIgnoredAnnotations();
+        int result = annotations.size();
+
+        return result;
     }
 
 

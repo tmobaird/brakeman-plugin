@@ -16,11 +16,12 @@ public final class ResultSummary {
      */
     public static String createSummary(final BrakemanResult result) {
         StringBuilder summary = new StringBuilder();
-        int bugs = result.getNumberOfAnnotations();
+        int bugs = result.getNumberOfNonIgnoredAnnotations();
+        int ignoredBugs = result.getNumberOfIgnoredAnnotations();
 
         summary.append(Messages.Brakeman_ProjectAction_Name());
         summary.append(": ");
-        if (bugs > 0) {
+        if (bugs > 0 || ignoredBugs > 0) {
             summary.append("<a href=\"brakemanResult\">");
         }
         if (bugs == 1) {
@@ -29,7 +30,15 @@ public final class ResultSummary {
         else {
             summary.append(Messages.Brakeman_ResultAction_MultipleWarnings(bugs));
         }
-        if (bugs > 0) {
+        if (ignoredBugs == 1) {
+            summary.append(". ");
+            summary.append(Messages.Brakeman_ResultAction_OneIgnoredWarning());
+        }
+        else {
+            summary.append(". ");
+            summary.append(Messages.Brakeman_ResultAction_MultipleIgnoredWarnings(ignoredBugs));
+        }
+        if (bugs > 0 || ignoredBugs > 0) {
             summary.append("</a>");
         }
         summary.append(".");
