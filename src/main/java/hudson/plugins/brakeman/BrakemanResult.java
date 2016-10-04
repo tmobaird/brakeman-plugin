@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -139,6 +137,9 @@ public class BrakemanResult extends BuildResult {
      * build that owns this instance of {@link BuildResult} will be also
      * changed.
      *
+     * This has been overridden to add a different evaluate strategy that
+     * evaluates thresholds against non-ignored warnings/annotations.
+     *
      * @param thresholds
      *            the failure thresholds
      * @param useDeltaValues
@@ -171,8 +172,7 @@ public class BrakemanResult extends BuildResult {
         else if (useDeltaValues) {
             buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations,
                     getDelta(), getHighDelta(), getNormalDelta(), getLowDelta());
-        }
-        else {
+        } else {
             buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds,
                     annotations, getNewWarnings());
         }

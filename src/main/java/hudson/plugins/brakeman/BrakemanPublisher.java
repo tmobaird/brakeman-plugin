@@ -13,10 +13,8 @@ import hudson.plugins.analysis.util.model.Priority;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.plugins.brakeman.scanners.*;
@@ -95,42 +93,56 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 
 	/** {@inheritDoc} */
 	@Override
-		public BuildResult perform(final Run<?, ?> build, final FilePath workspace, final PluginLogger logger) throws InterruptedException, IOException {
-			return publishReport(build, workspace);
+	public BuildResult perform(final Run<?, ?> build, final FilePath workspace, final PluginLogger logger) throws InterruptedException, IOException {
+		return publishReport(build, workspace);
+	}
+
+	public BuildResult publishReport(final Run<?, ?> build, final FilePath workspace) throws InterruptedException, IOException {
+		FilePath brakemanOutput = new FilePath(workspace, this.outputFile);
+		String output = brakemanOutput.readToString();
+
+		ParserResult project = new ParserResult(workspace);
+
+		AbstractBrakemanScanner scanner;
+		String scannerType = getFileType(output);
+		if(scannerType == "JSON") {
+			scanner = new BrakemanJSONScanner();
+		} else {
+			scanner = new BrakemanTabsScanner();
 		}
+		scanner.scan(output, project);
 
-		public BuildResult publishReport(final Run<?, ?> build, final FilePath workspace) throws InterruptedException, IOException {
-			FilePath brakemanOutput = new FilePath(workspace, this.outputFile);
+		BrakemanResult result = new BrakemanResult(build, getDefaultEncoding(), project, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference());
+		build.addAction(new BrakemanResultAction(build, this, result));
 
-			String outputOne = brakemanOutput.readToString();
+		return result;
+	}
 
-			ParserResult project = new ParserResult(workspace);
-
-			AbstractBrakemanScanner scanner;
-
-			if(this.outputFile.endsWith(".json")) {
-				scanner = new BrakemanJSONScanner();
-			} else {
-				scanner = new BrakemanTabsScanner();
-
-			}
-
-			scanner.scan(outputOne, project);
-
-			BrakemanResult result = new BrakemanResult(build, getDefaultEncoding(), project, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference());
-			build.addAction(new BrakemanResultAction(build, this, result));
-
-			return result;
+	/**
+	 * Determines the file type based upon the contents.
+	 *
+	 * @return result
+	 */
+	public String getFileType(String content) {
+		String result;
+		try {
+			new JSONObject(content);
+			result = "JSON";
+		} catch (JSONException e) {
+			result = "Tabs";
 		}
+		return result;
+	}
+
 	/** {@inheritDoc} */
 	@Override
-		public PluginDescriptor getDescriptor() {
+	public PluginDescriptor getDescriptor() {
 			return BRAKEMAN_DESCRIPTOR;
 		}
 
 	/** {@inheritDoc} */
 	@Override
-		protected boolean canContinue(final Result result) {
+	protected boolean canContinue(final Result result) {
 			return super.canContinue(result);
 		}
 

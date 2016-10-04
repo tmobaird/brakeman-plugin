@@ -9,13 +9,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A Java class that representats a JSON Scanner of the Brakeman Output file
+ * A Java class that represents a tabs Scanner of the Brakeman Output file
  * This class includes a specific strategy for implementing the parsing process
  * of the output file.
  *
  * @author Thomas Baird
  */
-public class BrakemanTabsScanner implements AbstractBrakemanScanner {
+public class BrakemanTabsScanner extends AbstractBrakemanScanner {
 
     private static Pattern pattern = Pattern.compile("^([^\t]+?)\t(\\d+)\t([\\w\\s]+?)\t(\\w+)\t([^\t]+?)\t(High|Medium|Weak)", Pattern.MULTILINE);
     /**
@@ -25,7 +25,6 @@ public class BrakemanTabsScanner implements AbstractBrakemanScanner {
 
     public void scan(String content, ParserResult project) {
         Matcher m = pattern.matcher(content);
-
         this.scanWarnings(m, project);
     }
 
@@ -37,24 +36,9 @@ public class BrakemanTabsScanner implements AbstractBrakemanScanner {
             String category = m.group(4);
             String message = m.group(5);
             String prio = m.group(6);
+            Priority priority = checkPriority(prio);
 
-            Priority priority = Priority.HIGH;
-            if ("Medium".equalsIgnoreCase(prio)) {
-                priority = Priority.NORMAL;
-            } else if ("High".equalsIgnoreCase(prio)) {
-                priority = Priority.HIGH;
-            } else if ("Weak".equalsIgnoreCase(prio)) {
-                priority = Priority.LOW;
-            }
-
-            int start = 0;
-            int end = line + 1;
-
-            if(line > 2)
-                start = line - 1;
-
-
-            project.addAnnotation(new Warning(fileName, start, end, type, category, message, priority));
+            project.addAnnotation(new Warning(fileName, getStart(line), getEnd(line), type, category, message, priority));
         }
     }
 }

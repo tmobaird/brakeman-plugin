@@ -9,92 +9,53 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A Java class that representats a JSON Scanner of the Brakeman Output file
+ * A Java class that represents a JSON Scanner of the Brakeman Output file
  * This class includes a specific strategy for implementing the parsing process
  * of the output file.
  *
  * @author Thomas Baird
  */
-public class BrakemanJSONScanner implements AbstractBrakemanScanner {
+public class BrakemanJSONScanner extends AbstractBrakemanScanner {
     /**
      * Creates a new instance of <code>BrakemanJSONScanner</code>
      */
-    public BrakemanJSONScanner() {}
-
-    public void scan(String content, ParserResult project) {
-        // Parses Warning From JSON
-        // Probably should create BrakemanJSONParser Class
-        // and BrakemanTabsParser Class so we can make this backwards compatible
-        this.scanWarnings(content, project);
-        this.scanIgnoredWarnings(content, project);
-
+    public BrakemanJSONScanner() {
     }
 
-    private void scanWarnings(String brakemanOutput, ParserResult project) {
+    public void scan(String content, ParserResult project) {
         try {
-            JSONObject brakemanFile = new JSONObject(brakemanOutput);
-            JSONArray rows = brakemanFile.getJSONArray("warnings");
-            for(int i = 0; i < rows.length(); i++) {
-                JSONObject row = rows.getJSONObject(i);
-                String fileName = row.getString("file");
-                int line = row.getInt("line");
-                String type = row.getString("warning_type");
-                String category = "General";
-                String message = row.getString("message") + ": " + row.getString("code");
-                String prio = row.getString("confidence");
-
-                Priority priority = Priority.HIGH;
-                if ("Medium".equalsIgnoreCase(prio)) {
-                    priority = Priority.NORMAL;
-                } else if ("High".equalsIgnoreCase(prio)) {
-                    priority = Priority.HIGH;
-                } else if ("Weak".equalsIgnoreCase(prio)) {
-                    priority = Priority.LOW;
-                }
-                int start = 0;
-                int end = line + 1;
-
-                if (line > 2) {
-                    start = line - 1;
-                }
-
-                project.addAnnotation(new Warning(fileName, start, end, type, category, message, priority));
-            }
-        } catch(JSONException e) {
+            JSONObject brakemanFile = new JSONObject(content);
+            scanJSONResultSet(brakemanFile, project, "warnings");
+            scanJSONResultSet(brakemanFile, project, "ignored_warnings");
+        } catch (JSONException e) {
+            // Need to figure out how to get the logger in the arguments of this function to use here.
             e.printStackTrace();
         }
     }
 
-    private void scanIgnoredWarnings(String brakemanOutput, ParserResult project) {
+    private void scanJSONResultSet(JSONObject brakemanResultFile, ParserResult project, String filterType) {
         try {
-            JSONObject brakemanFile = new JSONObject(brakemanOutput);
-            JSONArray rows = brakemanFile.getJSONArray("ignored_warnings");
+            JSONArray rows = brakemanResultFile.getJSONArray(filterType);
             for (int i = 0; i < rows.length(); i++) {
                 JSONObject row = rows.getJSONObject(i);
                 String fileName = row.getString("file");
                 int line = row.getInt("line");
                 String type = row.getString("warning_type");
-                String category = "Ignored";
-                String message = row.getString("message") + ": " + row.getString("code");
+                String category;
+                if (filterType == "ignored_warnings") {
+                    category = "Ignored";
+                } else {
+                    category = "General";
+                }
+                StringBuilder message = new StringBuilder();
+                message.
+                        append(row.getString("message")).
+                        append(": ").
+                        append(row.getString("code"));
                 String prio = row.getString("confidence");
+                Priority priority = checkPriority(prio);
 
-                Priority priority = Priority.HIGH;
-                if ("Medium".equalsIgnoreCase(prio)) {
-                    priority = Priority.NORMAL;
-                } else if ("High".equalsIgnoreCase(prio)) {
-                    priority = Priority.HIGH;
-                } else if ("Weak".equalsIgnoreCase(prio)) {
-                    priority = Priority.LOW;
-                }
-
-                int start = 0;
-                int end = line + 1;
-
-                if (line > 2) {
-                    start = line - 1;
-                }
-
-                project.addAnnotation(new Warning(fileName, start, end, type, category, message, priority));
+                project.addAnnotation(new Warning(fileName, getStart(line), getEnd(line), type, category, message.toString(), priority));
             }
         } catch (JSONException e) {
             e.printStackTrace();
