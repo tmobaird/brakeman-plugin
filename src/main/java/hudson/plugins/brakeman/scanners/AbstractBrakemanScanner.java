@@ -2,6 +2,7 @@ package hudson.plugins.brakeman.scanners;
 
 import hudson.plugins.analysis.core.ParserResult;
 import hudson.plugins.analysis.util.model.Priority;
+import hudson.plugins.analysis.util.PluginLogger;
 
 /**
  * A Java class that representats an abstract Scanner class for the Brakeman Output file
@@ -13,7 +14,7 @@ import hudson.plugins.analysis.util.model.Priority;
  */
 public abstract class AbstractBrakemanScanner {
 
-    public abstract void scan(String content, ParserResult project);
+    public abstract boolean scan(String content, ParserResult project, PluginLogger logger);
 
     protected int getStart(int line) {
         int start = 0;

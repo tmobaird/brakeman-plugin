@@ -1,18 +1,9 @@
 package hudson.plugins.brakeman;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.Iterator;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.model.Result;
 import hudson.plugins.analysis.core.BuildHistory;
@@ -22,15 +13,9 @@ import hudson.plugins.analysis.core.BuildResultEvaluator;
 import hudson.plugins.analysis.core.ParserResult;
 import hudson.plugins.analysis.core.ResultAction;
 import hudson.plugins.analysis.util.model.FileAnnotation;
-import org.apache.commons.lang.StringUtils;
-
-
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import hudson.plugins.analysis.util.PluginLogger;
 
 import com.thoughtworks.xstream.XStream;
-
 
 /**
  * Represents the results of the warning analysis. One instance of this class is persisted for
@@ -62,9 +47,10 @@ public class BrakemanResult extends BuildResult {
      *            compare with only stable builds
      */
     public BrakemanResult(final Run<?, ?> build, final String defaultEncoding, final ParserResult result,
-                          final boolean usePreviousBuildAsReference, final boolean useStableBuildAsReference) {
+                          final boolean usePreviousBuildAsReference, final boolean useStableBuildAsReference, ScanResult scanResult) {
         this(build, defaultEncoding, result, usePreviousBuildAsReference, useStableBuildAsReference,
                 BrakemanResultAction.class);
+        validateScan(scanResult);
     }
 
     protected BrakemanResult(final Run<?, ?> build, final String defaultEncoding, final ParserResult result,
@@ -82,7 +68,6 @@ public class BrakemanResult extends BuildResult {
             serializeAnnotations(result.getAnnotations());
         }
     }
-
 
     /** {@inheritDoc} */
     @Override
@@ -116,7 +101,7 @@ public class BrakemanResult extends BuildResult {
         return Messages.Brakeman_ProjectAction_Name();
     }
 
-    public void setReason(String reason) {
+    protected void setReason(String reason) {
         this.reason = reason;
     }
 
@@ -158,33 +143,32 @@ public class BrakemanResult extends BuildResult {
     public void evaluateStatus(final Thresholds thresholds, final boolean useDeltaValues, final boolean canComputeNew,
                                final PluginLogger logger, final String url) {
         // CHECKSTYLE:ON
-        this.thresholds = thresholds;
-        this.useDeltaValues = useDeltaValues;
+        if(!hasError()) {
+            this.thresholds = thresholds;
+            this.useDeltaValues = useDeltaValues;
 
-        BuildResultEvaluator resultEvaluator = new BuildResultEvaluator(url);
-        Result buildResult;
-        StringBuilder messages = new StringBuilder();
-        Set<FileAnnotation> annotations = getNonIgnoredAnnotations();
-        if (getHistory().isEmpty() || !canComputeNew) {
-            logger.log("Ignore new warnings since this is the first valid build");
-            buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations);
+            BuildResultEvaluator resultEvaluator = new BuildResultEvaluator(url);
+            Result buildResult;
+            StringBuilder messages = new StringBuilder();
+            Set<FileAnnotation> annotations = getAnnotationsByCategory("General");
+            if (getHistory().isEmpty() || !canComputeNew) {
+                logger.log("Ignore new warnings since this is the first valid build");
+                buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations);
+            } else if (useDeltaValues) {
+                buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations,
+                        getDelta(), getHighDelta(), getNormalDelta(), getLowDelta());
+            } else {
+                buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds,
+                        annotations, getNewWarnings());
+            }
+            setReason(messages.toString());
+            setResult(buildResult);
+
+            logger.log(String.format("%s %s - %s", Messages.Brakeman_ResultAction_Status(), buildResult.color.getDescription(), getReason()));
         }
-        else if (useDeltaValues) {
-            buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations,
-                    getDelta(), getHighDelta(), getNormalDelta(), getLowDelta());
-        } else {
-            buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds,
-                    annotations, getNewWarnings());
-        }
-        String myReason = messages.toString();
-        setReason(myReason);
-
-        setResult(buildResult);
-
-        logger.log(String.format("%s %s - %s", Messages.Brakeman_ResultAction_Status(), buildResult.color.getDescription(), getReason()));
     }
 
-    public Set<FileAnnotation> getIgnoredAnnotations() {
+    private Set<FileAnnotation> getIgnoredAnnotations() {
         Set<FileAnnotation> myAnnotations = getAnnotations();
         Iterator<FileAnnotation> itr = myAnnotations.iterator();
         Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
@@ -194,11 +178,29 @@ public class BrakemanResult extends BuildResult {
                 annotations.add(a);
             }
         }
-
         return annotations;
     }
 
-    public Set<FileAnnotation> getNonIgnoredAnnotations() {
+    private Set<FileAnnotation> getAnnotationsByCategory(String category) {
+        Set<FileAnnotation> myAnnotations = getAnnotations();
+        Iterator<FileAnnotation> itr = myAnnotations.iterator();
+        Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
+        while(itr.hasNext()){
+            FileAnnotation a = itr.next();
+            if(category == "Ignored") {
+                if(a.getCategory() == category) {
+                    annotations.add(a);
+                }
+            } else {
+                if(a.getCategory() != "Ignored") {
+                    annotations.add(a);
+                }
+            }
+        }
+        return annotations;
+    }
+
+    private Set<FileAnnotation> getNonIgnoredAnnotations() {
         Set<FileAnnotation> myAnnotations = getAnnotations();
         Iterator<FileAnnotation> itr = myAnnotations.iterator();
         Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
@@ -208,24 +210,34 @@ public class BrakemanResult extends BuildResult {
                 annotations.add(a);
             }
         }
-
         return annotations;
     }
 
-    public int getNumberOfIgnoredAnnotations() {
-        Set<FileAnnotation> annotations = getIgnoredAnnotations();
+    protected int getNumberOfIgnoredAnnotations() {
+        Set<FileAnnotation> annotations = getAnnotationsByCategory("Ignored");
         int result = annotations.size();
 
         return result;
     }
 
-    public int getNumberOfNonIgnoredAnnotations() {
-        Set<FileAnnotation> annotations = getNonIgnoredAnnotations();
+    protected int getNumberOfNonIgnoredAnnotations() {
+        Set<FileAnnotation> annotations = getAnnotationsByCategory("General");
         int result = annotations.size();
 
         return result;
     }
 
+    private void validateScan(ScanResult result) {
+        if(!result.isSuccessful()) {
+            StringBuilder report = new StringBuilder();
+            report.append("Brakeman Reports File Invalid. File: ");
+            report.append(result.getFilename());
+            report.append(" could not be ready properly. Please check console for additional information.");
+            getErrors().add(report.toString());
+            setReason("Reading of Brakeman output failed. Check logs and errors for more information.");
+            setResult(Result.FAILURE);
+        }
+    }
 
     /** {@inheritDoc} */
     @Override

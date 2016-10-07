@@ -25,9 +25,11 @@ public final class ResultSummary {
             summary.append("<a href=\"brakemanResult\">");
         }
         if (bugs == 1) {
-            summary.append(Messages.Brakeman_ResultAction_OneWarning()).append(". ");
+            summary.append(Messages.Brakeman_ResultAction_OneWarning());
+            summary.append(". ");
         } else {
-            summary.append(Messages.Brakeman_ResultAction_MultipleWarnings(bugs)).append(". ");
+            summary.append(Messages.Brakeman_ResultAction_MultipleWarnings(bugs));
+            summary.append(". ");
         }
         if (ignoredBugs == 1) {
             summary.append(Messages.Brakeman_ResultAction_OneIgnoredWarning());

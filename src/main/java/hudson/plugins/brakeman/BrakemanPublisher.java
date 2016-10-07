@@ -8,16 +8,16 @@ import hudson.model.Action;
 import hudson.model.Result;
 import hudson.plugins.analysis.core.*;
 import hudson.plugins.analysis.util.PluginLogger;
-import hudson.plugins.analysis.util.model.Priority;
 
 import java.io.IOException;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.json.JSONObject;
 import org.json.JSONException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.plugins.brakeman.scanners.*;
+import hudson.plugins.brakeman.ScanResult;
+
 /**
  * Publishes the results of the warnings analysis (freestyle project type).
  *
@@ -32,8 +32,6 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 	@Extension
 	public static final BrakemanDescriptor BRAKEMAN_DESCRIPTOR = new BrakemanDescriptor();
 	public String outputFile;
-	private static Pattern pattern = Pattern.compile("^([^\t]+?)\t(\\d+)\t([\\w\\s]+?)\t(\\w+)\t([^\t]+?)\t(High|Medium|Weak)", Pattern.MULTILINE);
-
 
 	/**
 	 * Creates a new instance of <code>BrakemanPublisher</code>
@@ -94,36 +92,48 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 	/** {@inheritDoc} */
 	@Override
 	public BuildResult perform(final Run<?, ?> build, final FilePath workspace, final PluginLogger logger) throws InterruptedException, IOException {
-		return publishReport(build, workspace);
+		return publishReport(build, workspace, logger);
 	}
 
-	public BuildResult publishReport(final Run<?, ?> build, final FilePath workspace) throws InterruptedException, IOException {
+	public BuildResult publishReport(final Run<?, ?> build, final FilePath workspace, final PluginLogger logger) throws InterruptedException, IOException {
 		FilePath brakemanOutput = new FilePath(workspace, this.outputFile);
 		String output = brakemanOutput.readToString();
 
 		ParserResult project = new ParserResult(workspace);
 
-		AbstractBrakemanScanner scanner;
-		String scannerType = getFileType(output);
-		if(scannerType == "JSON") {
-			scanner = new BrakemanJSONScanner();
-		} else {
-			scanner = new BrakemanTabsScanner();
-		}
-		scanner.scan(output, project);
+        AbstractBrakemanScanner scanner = createScanner(output);
+		boolean successfulScan = scanner.scan(output, project, logger);
+		BrakemanResult result = new BrakemanResult(build, getDefaultEncoding(), project, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference(), new ScanResult(successfulScan, brakemanOutput.getName()));
 
-		BrakemanResult result = new BrakemanResult(build, getDefaultEncoding(), project, usePreviousBuildAsReference(), useOnlyStableBuildsAsReference());
 		build.addAction(new BrakemanResultAction(build, this, result));
 
 		return result;
 	}
 
+    /**
+     * Determines the type of Scanner to use.
+     *
+     * @param outputContent
+     * @return scanner
+     */
+	protected AbstractBrakemanScanner createScanner(String outputContent) {
+        String scannerType = getFileType(outputContent);
+        AbstractBrakemanScanner scanner;
+        if(scannerType == "JSON") {
+            scanner = new BrakemanJSONScanner();
+        } else {
+            scanner = new BrakemanTabsScanner();
+        }
+        return scanner;
+    }
+
 	/**
 	 * Determines the file type based upon the contents.
 	 *
+     * @param content
 	 * @return result
 	 */
-	public String getFileType(String content) {
+	protected String getFileType(String content) {
 		String result;
 		try {
 			new JSONObject(content);
@@ -145,8 +155,6 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 	protected boolean canContinue(final Result result) {
 			return super.canContinue(result);
 		}
-
-
 
   public hudson.matrix.MatrixAggregator createAggregator(hudson.matrix.MatrixBuild build,hudson.Launcher launcher,hudson.model.BuildListener listener) {
     return null;

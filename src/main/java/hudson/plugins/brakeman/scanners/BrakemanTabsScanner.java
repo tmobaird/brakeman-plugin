@@ -1,6 +1,7 @@
 package hudson.plugins.brakeman.scanners;
 
 import hudson.plugins.analysis.core.ParserResult;
+import hudson.plugins.analysis.util.PluginLogger;
 import hudson.plugins.analysis.util.model.Priority;
 import hudson.plugins.brakeman.Warning;
 
@@ -17,15 +18,20 @@ import java.util.regex.Pattern;
  */
 public class BrakemanTabsScanner extends AbstractBrakemanScanner {
 
+    private boolean result;
+
     private static Pattern pattern = Pattern.compile("^([^\t]+?)\t(\\d+)\t([\\w\\s]+?)\t(\\w+)\t([^\t]+?)\t(High|Medium|Weak)", Pattern.MULTILINE);
     /**
      * Creates a new instance of <code>BrakemanTabsScanner</code>
      */
-    public BrakemanTabsScanner() {}
+    public BrakemanTabsScanner() {
+        this.result = true;
+    }
 
-    public void scan(String content, ParserResult project) {
+    public boolean scan(String content, ParserResult project, PluginLogger logger) {
         Matcher m = pattern.matcher(content);
         this.scanWarnings(m, project);
+        return result;
     }
 
     private void scanWarnings(Matcher m, ParserResult project) {
@@ -35,8 +41,7 @@ public class BrakemanTabsScanner extends AbstractBrakemanScanner {
             String type = m.group(3);
             String category = m.group(4);
             String message = m.group(5);
-            String prio = m.group(6);
-            Priority priority = checkPriority(prio);
+            Priority priority = checkPriority(m.group(6));
 
             project.addAnnotation(new Warning(fileName, getStart(line), getEnd(line), type, category, message, priority));
         }
