@@ -150,7 +150,7 @@ public class BrakemanResult extends BuildResult {
             BuildResultEvaluator resultEvaluator = new BuildResultEvaluator(url);
             Result buildResult;
             StringBuilder messages = new StringBuilder();
-            Set<FileAnnotation> annotations = getAnnotationsByCategory("General");
+            Set<FileAnnotation> annotations = getNonIgnoredAnnotations();
             if (getHistory().isEmpty() || !canComputeNew) {
                 logger.log("Ignore new warnings since this is the first valid build");
                 buildResult = resultEvaluator.evaluateBuildResult(messages, thresholds, annotations);
@@ -168,6 +168,11 @@ public class BrakemanResult extends BuildResult {
         }
     }
 
+    /**
+     * Gets all Annotations with the category "Ignored".
+     *
+     * @return annotations
+     */
     private Set<FileAnnotation> getIgnoredAnnotations() {
         Set<FileAnnotation> myAnnotations = getAnnotations();
         Iterator<FileAnnotation> itr = myAnnotations.iterator();
@@ -181,25 +186,11 @@ public class BrakemanResult extends BuildResult {
         return annotations;
     }
 
-    private Set<FileAnnotation> getAnnotationsByCategory(String category) {
-        Set<FileAnnotation> myAnnotations = getAnnotations();
-        Iterator<FileAnnotation> itr = myAnnotations.iterator();
-        Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
-        while(itr.hasNext()){
-            FileAnnotation a = itr.next();
-            if(category == "Ignored") {
-                if(a.getCategory() == category) {
-                    annotations.add(a);
-                }
-            } else {
-                if(a.getCategory() != "Ignored") {
-                    annotations.add(a);
-                }
-            }
-        }
-        return annotations;
-    }
-
+    /**
+     * Gets all Annotations that don't have the category "Ignored".
+     *
+     * @return annotations
+     */
     private Set<FileAnnotation> getNonIgnoredAnnotations() {
         Set<FileAnnotation> myAnnotations = getAnnotations();
         Iterator<FileAnnotation> itr = myAnnotations.iterator();
@@ -213,20 +204,35 @@ public class BrakemanResult extends BuildResult {
         return annotations;
     }
 
+    /**
+     * Returns Integer of the number of Ignored annotations.
+     *
+     * @return result
+     */
     protected int getNumberOfIgnoredAnnotations() {
-        Set<FileAnnotation> annotations = getAnnotationsByCategory("Ignored");
+        Set<FileAnnotation> annotations = getIgnoredAnnotations();
         int result = annotations.size();
 
         return result;
     }
 
+    /**
+     * Returns Integer of the number of Non-Ignored annotations.
+     *
+     * @return result
+     */
     protected int getNumberOfNonIgnoredAnnotations() {
-        Set<FileAnnotation> annotations = getAnnotationsByCategory("General");
+        Set<FileAnnotation> annotations = getNonIgnoredAnnotations();
         int result = annotations.size();
 
         return result;
     }
 
+    /**
+     * Determines if a ScanResult is valid and generates errors if it is not.
+     *
+     * @param result
+     */
     private void validateScan(ScanResult result) {
         if(!result.isSuccessful()) {
             StringBuilder report = new StringBuilder();
