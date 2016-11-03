@@ -5,9 +5,10 @@ import hudson.plugins.analysis.util.PluginLogger;
 import hudson.plugins.analysis.util.model.Priority;
 import hudson.plugins.brakeman.Warning;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A Java class that represents a JSON Scanner of the Brakeman Output file
@@ -18,6 +19,15 @@ import org.json.JSONObject;
  */
 public class BrakemanJSONScanner extends AbstractBrakemanScanner {
 
+    /** Enum for possible warning/annotation categories */
+    public enum Category {
+        GENERAL, IGNORED;
+
+        public String getName() {
+           return StringUtils.capitalize(name().toLowerCase());
+        }
+    }
+
     /**
      * Creates a new instance of <code>BrakemanJSONScanner</code>
      */
@@ -26,7 +36,7 @@ public class BrakemanJSONScanner extends AbstractBrakemanScanner {
     public boolean scan(String content, ParserResult project, PluginLogger logger) {
         boolean result = true;
         try {
-            JSONObject brakemanFile = new JSONObject(content);
+            JSONObject brakemanFile = JSONObject.fromObject(content);
             scanJSONResultSet(brakemanFile, project, "warnings");
             scanJSONResultSet(brakemanFile, project, "ignored_warnings");
         } catch (JSONException e) {
@@ -38,12 +48,12 @@ public class BrakemanJSONScanner extends AbstractBrakemanScanner {
 
     private void scanJSONResultSet(JSONObject brakemanResultFile, ParserResult project, String filterType) throws JSONException {
         JSONArray rows = brakemanResultFile.getJSONArray(filterType);
-        for (int i = 0; i < rows.length(); i++) {
+        for (int i = 0; i < rows.size(); i++) {
             JSONObject row = rows.getJSONObject(i);
             String fileName = row.getString("file");
             int line = row.getInt("line");
             String type = row.getString("warning_type");
-            String category = getCategory(filterType);
+            String category = getCategory(filterType).getName();
             StringBuilder message = new StringBuilder();
             message.
                 append(row.getString("message")).
@@ -55,12 +65,12 @@ public class BrakemanJSONScanner extends AbstractBrakemanScanner {
         }
     }
 
-    private String getCategory(String filterType) {
-        String category;
+    private Category getCategory(String filterType) {
+        Category category;
         if (filterType == "ignored_warnings") {
-            category = "Ignored";
+            category = Category.IGNORED;
         } else {
-            category = "General";
+            category = Category.GENERAL;
         }
         return category;
     }

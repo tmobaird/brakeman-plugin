@@ -11,8 +11,8 @@ import hudson.plugins.analysis.util.PluginLogger;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
-import org.json.JSONObject;
-import org.json.JSONException;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.plugins.brakeman.scanners.*;
@@ -32,6 +32,10 @@ public class BrakemanPublisher extends HealthAwarePublisher {
 	@Extension
 	public static final BrakemanDescriptor BRAKEMAN_DESCRIPTOR = new BrakemanDescriptor();
 	public String outputFile;
+	/** Enum for possible file types for brakeman output */
+	public enum FileType {
+		JSON, TABS
+	}
 
 	/**
 	 * Creates a new instance of <code>BrakemanPublisher</code>
@@ -117,9 +121,9 @@ public class BrakemanPublisher extends HealthAwarePublisher {
      * @return scanner
      */
 	protected AbstractBrakemanScanner createScanner(String outputContent) {
-        String scannerType = getFileType(outputContent);
+        FileType scannerType = getFileType(outputContent);
         AbstractBrakemanScanner scanner;
-        if(scannerType == "JSON") {
+        if(scannerType == FileType.JSON) {
             scanner = new BrakemanJSONScanner();
         } else {
             scanner = new BrakemanTabsScanner();
@@ -133,14 +137,12 @@ public class BrakemanPublisher extends HealthAwarePublisher {
      * @param content
 	 * @return result
 	 */
-	protected String getFileType(String content) {
-		String result;
+	protected FileType getFileType(String content) {
+		FileType result = FileType.TABS;
 		try {
-			new JSONObject(content);
-			result = "JSON";
-		} catch (JSONException e) {
-			result = "Tabs";
-		}
+			JSONObject.fromObject(content);
+			result = FileType.JSON;
+		} catch (JSONException e) { }
 		return result;
 	}
 

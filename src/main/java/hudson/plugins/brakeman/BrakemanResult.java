@@ -179,7 +179,7 @@ public class BrakemanResult extends BuildResult {
         Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
         while(itr.hasNext()) {
             FileAnnotation a = itr.next();
-            if(a.getCategory() == "Ignored") {
+            if(a.getCategory().equals("Ignored")) {
                 annotations.add(a);
             }
         }
@@ -197,7 +197,7 @@ public class BrakemanResult extends BuildResult {
         Set<FileAnnotation> annotations = new HashSet<FileAnnotation>();
         while(itr.hasNext()){
             FileAnnotation a = itr.next();
-            if(a.getCategory() != "Ignored") {
+            if(!a.getCategory().equals("Ignored")) {
                 annotations.add(a);
             }
         }
